@@ -11,11 +11,13 @@ class QuizInterface(tk.Toplevel):
         self.title("Quiz")
         self.geometry("400x300")
 
-        self.category = tk.StringVar(self)
-        self.category.set("Select Category") # Default value
         self.category_choices = ["Analytic Thinking (DS3810)", "Marketing", "Applications Development (DS3850)", "Business Analytics (DS3620)", "Database Management (DS3860)"]
-        self.category_dropdown = tk.OptionMenu(self, self.category, *self.category_choices, command=self.load_questions)
-        self.category_dropdown.pack(pady=10)
+        self.category_buttons = {}
+
+        for category in self.category_choices:
+            button = tk.Button(self, text=category, command=lambda cat=category: self.start_quiz(cat), padx=20, pady=10)
+            self.category_buttons[category] = button
+            button.pack(pady=5)
 
         self.questions = []
         self.current_question_index = 0
@@ -38,7 +40,18 @@ class QuizInterface(tk.Toplevel):
         self.next_button = tk.Button(self, text="Next Question", command=self.next_question, state=tk.DISABLED)
         self.next_button.pack(pady=5)
 
-    def load_questions(self, selected_category):
+        # Initially hide question elements
+        self.question_label.pack_forget()
+        for rb in self.option_radiobuttons:
+            rb.pack_forget()
+        self.submit_button.pack_forget()
+        self.next_button.pack_forget()
+
+    def start_quiz(self, selected_category):
+        # Hide category buttons
+        for button in self.category_buttons.values():
+            button.pack_forget()
+
         self.questions = []
         self.current_question_index = 0
         self.score = 0
@@ -49,11 +62,18 @@ class QuizInterface(tk.Toplevel):
         self.submit_button.config(state=tk.DISABLED)
         self.next_button.config(state=tk.DISABLED)
 
+        # Show question elements
+        self.question_label.pack(pady=10, padx=10)
+        for rb in self.option_radiobuttons:
+            rb.pack()
+        self.submit_button.pack(pady=10)
+        self.next_button.pack(pady=5)
+
         conn = None
         try:
             conn = sqlite3.connect(DATABASE_NAME)
             cursor = conn.cursor()
-            cursor.execute(f"SELECT question_text, option1, option2, option3, option4, correct_answer FROM {selected_category} ORDER BY RANDOM()") # Fetch in random order
+            cursor.execute(f"SELECT question_text, option1, option2, option3, option4, correct_answer FROM '{selected_category}' ORDER BY RANDOM()") # Fetch in random order
             fetched_questions = cursor.fetchall()
             if fetched_questions:
                 for q in fetched_questions:
@@ -65,7 +85,7 @@ class QuizInterface(tk.Toplevel):
                     self.questions.append(question_data)
                 self.display_question()
             else:
-                self.question_label.config(text="No questions available in this category.")
+                self.question_label.config(text=f"No questions available in the '{selected_category}' category.")
         except sqlite3.Error as e:
             messagebox.showerror("Database Error", f"Error fetching questions: {e}")
             self.question_label.config(text="Error loading questions.")
