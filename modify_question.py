@@ -16,7 +16,7 @@ class ModifyQuestion(tk.Frame):
         self.category_var = tk.StringVar(self)
         self.category_choices = ["Analytic Thinking (DS3810)", "Marketing", "Applications Development (DS3850)", "Business Analytics (DS3620)", "Database Management (DS3860)"]
         self.category_var.set(self.category_choices[0])
-        self.category_dropdown = ttk.Combobox(self, textvariable=self.category_var, values=self.category_choices)
+        self.category_dropdown = ttk.Combobox(self, textvariable=self.category_var, values=self.category_choices, state="readonly") # Make it readonly
         self.category_dropdown.pack(anchor="w", padx=20, pady=5)
         self.category_dropdown.bind("<<ComboboxSelected>>", self.populate_question_list)
 
@@ -64,7 +64,7 @@ class ModifyQuestion(tk.Frame):
         try:
             conn = sqlite3.connect(DATABASE_NAME)
             cursor = conn.cursor()
-            cursor.execute(f"SELECT rowid, question_text FROM {category}")
+            cursor.execute(f"SELECT rowid, question_text FROM \"{category}\"")
             questions = cursor.fetchall()
             for rowid, text in questions:
                 self.question_list.insert(tk.END, f"ID: {rowid} - {text[:50]}...")
@@ -92,7 +92,7 @@ class ModifyQuestion(tk.Frame):
             try:
                 conn = sqlite3.connect(DATABASE_NAME)
                 cursor = conn.cursor()
-                cursor.execute(f"SELECT question_text, option1, option2, option3, option4, correct_answer FROM {category} WHERE rowid = ?", (self.selected_question_id,))
+                cursor.execute(f"SELECT question_text, option1, option2, option3, option4, correct_answer FROM \"{category}\" WHERE rowid = ?", (self.selected_question_id,))
                 question_details = cursor.fetchone()
                 if question_details:
                     self.question_text_entry.delete("1.0", tk.END)
@@ -147,7 +147,7 @@ class ModifyQuestion(tk.Frame):
         try:
             conn = sqlite3.connect(DATABASE_NAME)
             cursor = conn.cursor()
-            sql = f"""UPDATE {category} SET question_text = ?, option1 = ?, option2 = ?, option3 = ?, option4 = ?, correct_answer = ?
+            sql = f"""UPDATE "{category}" SET question_text = ?, option1 = ?, option2 = ?, option3 = ?, option4 = ?, correct_answer = ?
                       WHERE rowid = ?"""
             cursor.execute(sql, (question_text, options[0], options[1], options[2], options[3], correct_answer, self.selected_question_id))
             conn.commit()
