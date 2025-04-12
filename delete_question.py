@@ -14,9 +14,9 @@ class DeleteQuestion(tk.Frame):
         self.category_label = tk.Label(self, text="Select Category:")
         self.category_label.pack(anchor="w", padx=20)
         self.category_var = tk.StringVar(self)
-        self.category_choices = ["Analytic Thinking (DS3810)", "Marketing", "Applications Development (DS3850)", "Business Analytics (DS3620)", "Database Management (DS3860)"]
+        self.category_choices = ["", "Analytic Thinking (DS3810)", "Marketing", "Applications Development (DS3850)", "Business Analytics (DS3620)", "Database Management (DS3860)"]
         self.category_var.set(self.category_choices[0])
-        self.category_dropdown = ttk.Combobox(self, textvariable=self.category_var, values=self.category_choices)
+        self.category_dropdown = ttk.Combobox(self, textvariable=self.category_var, values=self.category_choices, state="readonly")
         self.category_dropdown.pack(anchor="w", padx=20, pady=5)
         self.category_dropdown.bind("<<ComboboxSelected>>", self.populate_question_list)
 
@@ -28,7 +28,7 @@ class DeleteQuestion(tk.Frame):
         self.question_list_scrollbar.config(command=self.question_list.yview)
         self.question_list_scrollbar.pack(side="right", fill="y")
 
-        self.delete_button = tk.Button(self, text="Delete Selected Question", command=self.delete_selected_question)
+        self.delete_button = tk.Button(self, text="Delete Selected Question", command=self.delete_selected_question, state=tk.DISABLED)
         self.delete_button.pack(pady=20)
 
         self.populate_question_list()
@@ -36,16 +36,24 @@ class DeleteQuestion(tk.Frame):
     def populate_question_list(self, event=None):
         self.question_list.delete(0, tk.END)
         category = self.category_var.get()
+        if not category:
+            self.delete_button.config(state=tk.DISABLED)
+            return
         conn = None
         try:
             conn = sqlite3.connect(DATABASE_NAME)
             cursor = conn.cursor()
-            cursor.execute(f"SELECT rowid, question_text FROM {category}")
+            cursor.execute(f"SELECT rowid, question_text FROM \"{category}\"")
             questions = cursor.fetchall()
             for rowid, text in questions:
                 self.question_list.insert(tk.END, f"ID: {rowid} - {text[:50]}...") # Show a preview of the question
+            if questions:
+                self.delete_button.config(state=tk.NORMAL)
+            else:
+                self.delete_button.config(state=tk.DISABLED)
         except sqlite3.Error as e:
             messagebox.showerror("Database Error", f"Error fetching questions: {e}")
+            self.delete_button.config(state=tk.DISABLED)
         finally:
             if conn:
                 conn.close()
@@ -57,7 +65,11 @@ class DeleteQuestion(tk.Frame):
             return
 
         selected_question = self.question_list.get(selected_index[0])
-        question_id = selected_question.split(" - ")[0].split(": ")[1]
+        try:
+            question_id = selected_question.split(" - ")[0].split(": ")[1]
+        except IndexError:
+            messagebox.showerror("Error", "Could not parse question ID.")
+            return
         category = self.category_var.get()
 
         if messagebox.askyesno("Confirm Delete", f"Are you sure you want to delete question ID {question_id} from {category}?"):
@@ -65,7 +77,7 @@ class DeleteQuestion(tk.Frame):
             try:
                 conn = sqlite3.connect(DATABASE_NAME)
                 cursor = conn.cursor()
-                cursor.execute(f"DELETE FROM {category} WHERE rowid = ?", (question_id,))
+                cursor.execute(f"DELETE FROM \"{category}\" WHERE rowid = ?", (question_id,))
                 conn.commit()
                 messagebox.showinfo("Success", f"Question ID {question_id} deleted successfully from {category}.")
                 self.populate_question_list() # Refresh the list after deletion
