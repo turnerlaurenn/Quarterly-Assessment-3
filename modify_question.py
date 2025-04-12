@@ -14,9 +14,9 @@ class ModifyQuestion(tk.Frame):
         self.category_label = tk.Label(self, text="Select Category:")
         self.category_label.pack(anchor="w", padx=20)
         self.category_var = tk.StringVar(self)
-        self.category_choices = ["Analytic Thinking (DS3810)", "Marketing", "Applications Development (DS3850)", "Business Analytics (DS3620)", "Database Management (DS3860)"]
+        self.category_choices = ["", "Analytic Thinking (DS3810)", "Marketing", "Applications Development (DS3850)", "Business Analytics (DS3620)", "Database Management (DS3860)"]
         self.category_var.set(self.category_choices[0])
-        self.category_dropdown = ttk.Combobox(self, textvariable=self.category_var, values=self.category_choices, state="readonly") # Make it readonly
+        self.category_dropdown = ttk.Combobox(self, textvariable=self.category_var, values=self.category_choices, state="readonly")
         self.category_dropdown.pack(anchor="w", padx=20, pady=5)
         self.category_dropdown.bind("<<ComboboxSelected>>", self.populate_question_list)
 
@@ -33,25 +33,31 @@ class ModifyQuestion(tk.Frame):
         self.question_text_label.pack(anchor="w", padx=20, pady=10)
         self.question_text_entry = tk.Text(self, height=3, width=50)
         self.question_text_entry.pack(anchor="w", padx=20, pady=5)
+        self.question_text_entry.bind("<KeyRelease>", self.enable_save_button)
+        self.original_question_text = ""
 
         self.option_labels = []
         self.option_entries = []
+        self.original_options = []
         for i in range(4):
             label = tk.Label(self, text=f"Option {i+1}:")
             label.pack(anchor="w", padx=30)
             entry = tk.Entry(self, width=40)
             entry.pack(anchor="w", padx=30, pady=2)
+            entry.bind("<KeyRelease>", self.enable_save_button)
             self.option_labels.append(label)
             self.option_entries.append(entry)
+            self.original_options.append("")
 
         self.correct_answer_label = tk.Label(self, text="Correct Answer (enter option number 1-4):")
         self.correct_answer_label.pack(anchor="w", padx=20)
         self.correct_answer_entry = tk.Entry(self, width=5)
         self.correct_answer_entry.pack(anchor="w", padx=20, pady=5)
+        self.correct_answer_entry.bind("<KeyRelease>", self.enable_save_button)
+        self.original_correct_answer = ""
 
-        self.save_button = tk.Button(self, text="Save Changes", command=self.save_changes)
+        self.save_button = tk.Button(self, text="Save Changes", command=self.save_changes, state=tk.DISABLED) # Initially disabled
         self.save_button.pack(pady=20)
-        self.save_button.config(state=tk.DISABLED) # Initially disabled until a question is selected
 
         self.selected_question_id = None
 
@@ -97,16 +103,19 @@ class ModifyQuestion(tk.Frame):
                 if question_details:
                     self.question_text_entry.delete("1.0", tk.END)
                     self.question_text_entry.insert(tk.END, question_details[0])
+                    self.original_question_text = question_details[0]
                     for i in range(4):
                         self.option_entries[i].delete(0, tk.END)
                         self.option_entries[i].insert(0, question_details[i+1])
+                        self.original_options[i] = question_details[i+1]
 
                     correct_answer = question_details[5]
                     try:
                         correct_index = question_details[1:5].index(correct_answer) + 1
                         self.correct_answer_entry.delete(0, tk.END)
                         self.correct_answer_entry.insert(0, str(correct_index))
-                        self.save_button.config(state=tk.NORMAL)
+                        self.original_correct_answer = str(correct_index)
+                        self.enable_save_button() # Check button state after loading
                     except ValueError:
                         messagebox.showerror("Error", "Correct answer not found in options.")
                         self.save_button.config(state=tk.DISABLED)
@@ -122,6 +131,17 @@ class ModifyQuestion(tk.Frame):
             self.clear_details()
             self.save_button.config(state=tk.DISABLED)
             self.selected_question_id = None
+
+    def enable_save_button(self, event=None):
+        category_selected = self.category_var.get() != ""
+        question_text_changed = self.question_text_entry.get("1.0", tk.END).strip() != self.original_question_text
+        options_changed = [entry.get().strip() != original for entry, original in zip(self.option_entries, self.original_options)]
+        correct_answer_changed = self.correct_answer_entry.get().strip() != self.original_correct_answer
+
+        if category_selected and (question_text_changed or any(options_changed) or correct_answer_changed):
+            self.save_button.config(state=tk.NORMAL)
+        else:
+            self.save_button.config(state=tk.DISABLED)
 
     def save_changes(self):
         if self.selected_question_id is None:
@@ -166,9 +186,13 @@ class ModifyQuestion(tk.Frame):
 
     def clear_details(self):
         self.question_text_entry.delete("1.0", tk.END)
-        for entry in self.option_entries:
+        self.original_question_text = ""
+        for i, entry in enumerate(self.option_entries):
             entry.delete(0, tk.END)
+            self.original_options[i] = ""
         self.correct_answer_entry.delete(0, tk.END)
+        self.original_correct_answer = ""
+        self.save_button.config(state=tk.DISABLED)
 
 if __name__ == "__main__":
     root = tk.Tk()
