@@ -5,17 +5,21 @@ import random
 
 DATABASE_NAME = 'questions.db'
 
-class QuizInterface(tk.Toplevel):  # Inherit from tk.Toplevel
-    def __init__(self, master=None):  # Add master argument with a default value
+class QuizInterface(tk.Toplevel):
+    def __init__(self, master=None):
         super().__init__(master)
+        self.master = master
         self.title("Quiz")
         self.geometry("400x300")
+        self.protocol("WM_DELETE_WINDOW", self.on_quiz_closing)
+        self.quiz_started = False
         self.selected_category = None
         self.questions = []
         self.current_question_index = 0
         self.user_answers = {}
         self.feedback_displayed = False
         self.navigation_button = None
+        self.back_button = None
 
         self.display_category_buttons()
 
@@ -29,6 +33,7 @@ class QuizInterface(tk.Toplevel):  # Inherit from tk.Toplevel
             category_button.pack(pady=5)
 
     def start_quiz(self, category):
+        self.quiz_started = True
         self.selected_category = category
         self.questions = self.load_questions()
         self.current_question_index = 0
@@ -66,9 +71,8 @@ class QuizInterface(tk.Toplevel):  # Inherit from tk.Toplevel
         if self.current_question_index < len(self.questions):
             question_data = self.questions[self.current_question_index]
             question_text = question_data[0]
-            options = list(question_data[1:5])  # Convert the tuple to a list
+            options = list(question_data[1:5])
 
-            # Shuffle the answer choices
             random.shuffle(options)
 
             tk.Label(self, text=f"Question {self.current_question_index + 1}/{len(self.questions)}", font=("Arial", 12)).pack(pady=5)
@@ -79,15 +83,22 @@ class QuizInterface(tk.Toplevel):  # Inherit from tk.Toplevel
                 rb = ttk.Radiobutton(self, text=option, variable=self.answer_var, value=option)
                 rb.pack(padx=20, pady=2, anchor='w')
 
-            # Create the navigation button dynamically
-            self.create_navigation_button()
+            self.create_navigation_buttons()
         else:
             self.show_feedback()
 
-    def create_navigation_button(self):
-        # Destroy the previous button if it exists
+    def create_navigation_buttons(self):
         if self.navigation_button:
             self.navigation_button.destroy()
+        if self.back_button:
+            self.back_button.destroy()
+
+        navigation_frame = tk.Frame(self)
+        navigation_frame.pack(pady=10)
+
+        if self.current_question_index > 0:
+            self.back_button = tk.Button(navigation_frame, text="Back", command=self.previous_question)
+            self.back_button.pack(side="left", padx=10)
 
         if self.current_question_index < len(self.questions) - 1:
             button_text = "Next Question"
@@ -96,8 +107,14 @@ class QuizInterface(tk.Toplevel):  # Inherit from tk.Toplevel
             button_text = "Submit Quiz"
             button_command = self.submit_quiz
 
-        self.navigation_button = tk.Button(self, text=button_text, command=button_command)
-        self.navigation_button.pack(pady=10)
+        self.navigation_button = tk.Button(navigation_frame, text=button_text, command=button_command)
+        self.navigation_button.pack(side="right", padx=10)
+
+    def previous_question(self):
+        if self.current_question_index > 0:
+            self.user_answers[self.current_question_index] = self.answer_var.get()
+            self.current_question_index -= 1
+            self.display_question()
 
     def next_question(self):
         selected_answer = self.answer_var.get()
@@ -118,8 +135,7 @@ class QuizInterface(tk.Toplevel):  # Inherit from tk.Toplevel
 
     def show_feedback(self):
         self.clear_widgets()
-        
-        # Calculate the correct answers count
+
         correct_count = 0
         for i, question_data in enumerate(self.questions):
             correct_answer = question_data[5]
@@ -127,21 +143,19 @@ class QuizInterface(tk.Toplevel):  # Inherit from tk.Toplevel
             if user_answer == correct_answer:
                 correct_count += 1
 
-        # Display the simplified feedback: only the score
         tk.Label(self, text="Quiz Results", font=("Arial", 16, "bold")).pack(pady=10)
         percentage = (correct_count / len(self.questions)) * 100 if self.questions else 0
         tk.Label(self, text=f"You scored {correct_count}/{len(self.questions)} ({percentage:.2f}%)", font=("Arial", 14, "bold")).pack(pady=10)
-        
-        # Feedback displayed flag set to True
+
         self.feedback_displayed = True
 
-        # Add restart and exit buttons
         restart_button = tk.Button(self, text="Restart Quiz", command=self.restart_quiz)
         restart_button.pack(pady=5)
-        exit_button = tk.Button(self, text="Exit", command=self.destroy)
+        exit_button = tk.Button(self, text="Exit", command=self.on_quiz_closing) # Change here
         exit_button.pack(pady=5)
 
     def restart_quiz(self):
+        self.quiz_started = False
         self.selected_category = None
         self.questions = []
         self.current_question_index = 0
@@ -153,6 +167,19 @@ class QuizInterface(tk.Toplevel):  # Inherit from tk.Toplevel
         for widget in self.winfo_children():
             widget.destroy()
 
+    def on_quiz_closing(self):
+        if self.quiz_started and not self.feedback_displayed:
+            if messagebox.askyesno("Exit Quiz", "Are you sure you want to exit the quiz?"):
+                self.destroy()
+                if self.master:
+                    self.master.destroy()
+        else:
+            self.destroy()
+            if self.master:
+                self.master.destroy()
+
 if __name__ == "__main__":
-    quiz = QuizInterface()
-    quiz.mainloop()
+    root = tk.Tk()
+    root.withdraw()
+    quiz = QuizInterface(root)
+    root.mainloop()  # Keep mainloop here
