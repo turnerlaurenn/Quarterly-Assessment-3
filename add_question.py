@@ -16,12 +16,12 @@ class AddQuestion(tk.Frame):
         self.category_var = tk.StringVar(self)
         self.category_choices = ["", "Analytic Thinking (DS3810)", "Marketing", "Applications Development (DS3850)", "Business Analytics (DS3620)", "Database Management (DS3860)"]
         self.category_var.set(self.category_choices[0])
-        self.category_dropdown = ttk.Combobox(self, textvariable=self.category_var, values=self.category_choices, state="readonly") # Make it readonly
+        self.category_dropdown = ttk.Combobox(self, textvariable=self.category_var, values=self.category_choices, state="readonly")
         self.category_dropdown.pack(anchor="w", padx=20, pady=5)
 
         self.question_text_label = tk.Label(self, text="Question Text:")
         self.question_text_label.pack(anchor="w", padx=20, pady=10)
-        self.question_text_entry = tk.Text(self, height=3, width=50, wrap=tk.WORD) # Use tk.Text with word wrapping
+        self.question_text_entry = tk.Text(self, height=3, width=50, wrap=tk.WORD)
         self.question_text_entry.pack(anchor="w", padx=20, pady=5)
         self.question_text_entry.bind("<KeyRelease>", self.check_enable_add_button)
         self.question_text_entry.bind("<FocusOut>", self.check_enable_add_button)
@@ -61,12 +61,15 @@ class AddQuestion(tk.Frame):
         self.correct_answer_entry.bind("<KeyRelease>", self.check_enable_add_button)
         self.correct_answer_entry.bind("<FocusOut>", self.check_enable_add_button)
 
-        self.add_button = tk.Button(self, text="Add Question", command=self.add_new_question, state=tk.DISABLED) # Initially disabled
+        self.add_button = tk.Button(self, text="Add Question", command=self.add_new_question, state=tk.DISABLED)
         self.add_button.pack(pady=20)
 
         # Bind the Combobox selection event
-        self.category_dropdown.bind("<<ComboboxSelected>>", self.create_table_if_not_exists)
         self.category_dropdown.bind("<<ComboboxSelected>>", self.check_enable_add_button)
+        self.category_dropdown.bind("<<ComboboxSelected>>", self.create_table_if_not_exists)
+
+        # Create table for the initial category selection on startup.
+        self.create_table_if_not_exists()
 
     def check_enable_add_button(self, event=None):
         category_selected = self.category_var.get() != ""
@@ -119,6 +122,11 @@ class AddQuestion(tk.Frame):
             return
         if not all([question_text, option1, option2, option3, option4, correct_answer]):
             messagebox.showerror("Error", "Please fill in all fields.")
+            return
+        
+        options = [option1, option2, option3, option4]
+        if correct_answer not in options:
+            messagebox.showerror("Error", "Correct answer must match one of the options.")
             return
 
         conn = None
