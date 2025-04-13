@@ -78,6 +78,7 @@ class QuizInterface(tk.Toplevel):
             question_data = self.questions[self.current_question_index]
             question_text = question_data[0]
             options = list(question_data[1:5])
+            correct_answer = question_data[5]
 
             random.shuffle(options)
 
@@ -85,6 +86,12 @@ class QuizInterface(tk.Toplevel):
             tk.Label(self, text=question_text, wraplength=350, justify='left', font=("Arial", 14)).pack(padx=10, pady=10, anchor='w')
 
             self.answer_var = tk.StringVar()
+
+            # Restore saved answer if it exists
+            saved_answer = self.user_answers.get(self.current_question_index)
+            if saved_answer:
+                self.answer_var.set(saved_answer)
+
             for i, option in enumerate(options):
                 rb = ttk.Radiobutton(self, text=option, variable=self.answer_var, value=option)
                 rb.pack(padx=20, pady=2, anchor='w')
@@ -92,6 +99,7 @@ class QuizInterface(tk.Toplevel):
             self.create_navigation_buttons()
         else:
             self.show_feedback()
+
 
     def create_navigation_buttons(self):
         if self.navigation_button:
