@@ -1,16 +1,40 @@
+import sys
+sys.dont_write_bytecode = True
+
 import tkinter as tk
 from tkinter import ttk, messagebox
 import sqlite3
 import random
+from question_class import Question
 
 DATABASE_NAME = 'questions.db'
+
+class ScrollableFrame(tk.Frame):
+    def __init__(self, container, *args, **kwargs):
+        super().__init__(container, *args, **kwargs)
+        canvas = tk.Canvas(self)
+        scrollbar = ttk.Scrollbar(self, orient="vertical", command=canvas.yview)
+        self.scrollable_frame = tk.Frame(canvas)
+
+        self.scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(
+                scrollregion=canvas.bbox("all")
+            )
+        )
+
+        canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
 
 class QuizInterface(tk.Toplevel):
     def __init__(self, master=None):
         super().__init__(master)
         self.master = master
         self.title("Quiz")
-        self.geometry("400x300")
+        self.geometry("500x300")
         self.protocol("WM_DELETE_WINDOW", self.on_quiz_closing)
         self.quiz_started = False
         self.selected_category = None
@@ -54,8 +78,9 @@ class QuizInterface(tk.Toplevel):
             conn = sqlite3.connect(DATABASE_NAME)
             cursor = conn.cursor()
             cursor.execute(f"SELECT question_text, option1, option2, option3, option4, correct_answer FROM \"{self.selected_category}\"")
-            questions = cursor.fetchall()
-            random.shuffle(questions)
+            rows = cursor.fetchall()
+            random.shuffle(rows)
+            questions = [Question(*row) for row in rows]
         except sqlite3.Error as e:
             messagebox.showerror("Database Error", f"Error loading questions: {e}")
         finally:
@@ -66,6 +91,10 @@ class QuizInterface(tk.Toplevel):
     def display_question(self):
         if not self.questions:
             self.clear_widgets()
+            self.scroll_frame = ScrollableFrame(self)
+            self.scroll_frame.pack(fill="both", expand=True)
+            frame = self.scroll_frame.scrollable_frame
+
             tk.Label(self, text=f"No questions in '{self.selected_category}'.", font=("Arial", 14)).pack(pady=20)
             return
 
@@ -75,15 +104,15 @@ class QuizInterface(tk.Toplevel):
         self.clear_widgets()
 
         if self.current_question_index < len(self.questions):
-            question_data = self.questions[self.current_question_index]
-            question_text = question_data[0]
-            options = list(question_data[1:5])
-            correct_answer = question_data[5]
+            question = self.questions[self.current_question_index]
+            question_text = question.question_text
+            options = question.options.copy()
+            correct_answer = question.correct_answer
 
             random.shuffle(options)
 
             tk.Label(self, text=f"Question {self.current_question_index + 1}/{len(self.questions)}", font=("Arial", 12)).pack(pady=5)
-            tk.Label(self, text=question_text, wraplength=350, justify='left', font=("Arial", 14)).pack(padx=10, pady=10, anchor='w')
+            tk.Label(self, text=question_text, wraplength=450, justify='left', font=("Arial", 14)).pack(padx=10, pady=10, anchor='w')
 
             self.answer_var = tk.StringVar()
 
@@ -110,9 +139,6 @@ class QuizInterface(tk.Toplevel):
                 lbl.pack(side="left", padx=10, fill="x")
 
                 lbl.bind("<Button-1>", lambda e, opt=option: self.answer_var.set(opt))
-
-
-
 
             self.create_navigation_buttons()
         else:
@@ -171,16 +197,15 @@ class QuizInterface(tk.Toplevel):
         correct_count = 0
         self.incorrect_questions = []
 
-        for i, question_data in enumerate(self.questions):
-            correct_answer = question_data[5]
+        for i, question in enumerate(self.questions):
             user_answer = self.user_answers.get(i, "Not Answered")
-            if user_answer == correct_answer:
-                 correct_count += 1
+            if question.is_correct(user_answer):
+                correct_count += 1
             else:
-                self.incorrect_questions.append((i, question_data, user_answer))
+                self.incorrect_questions.append((i, question, user_answer))
 
         self.score_summary = f"You scored {correct_count}/{len(self.questions)} ({(correct_count / len(self.questions)) * 100:.2f}%)"
-                
+
         tk.Label(self, text="Quiz Results", font=("Arial", 16, "bold")).pack(pady=10)
         tk.Label(self, text=self.score_summary, font=("Arial", 14, "bold")).pack(pady=10)
 
@@ -197,35 +222,30 @@ class QuizInterface(tk.Toplevel):
         exit_button.pack(pady=5)
 
     def start_review(self):
-        self.current_review_index = 0  # Initialize the review index
+        self.current_review_index = 0
         self.display_review_question()
 
     def display_review_question(self):
         self.clear_widgets()
 
         if self.current_review_index < len(self.incorrect_questions):
-            i, question_data, user_answer = self.incorrect_questions[self.current_review_index]
-            question_text = question_data[0]
-            correct_answer = question_data[5]
+            i, question, user_answer = self.incorrect_questions[self.current_review_index]
+            question_text = question.question_text
+            correct_answer = question.correct_answer
 
-            # Score label
             tk.Label(self, text=f"{self.score_summary}", font=("Arial", 12, "bold")).pack(pady=5)
 
-            # Question label
             tk.Label(self, text=f"Reviewing Question {self.current_review_index + 1}/{len(self.incorrect_questions)}",
-                    font=("Arial", 11)).pack(pady=5)
+                     font=("Arial", 11)).pack(pady=5)
             tk.Label(self, text=question_text, wraplength=350, justify='left',
-                    font=("Arial", 13)).pack(padx=10, pady=10, anchor='w')
+                     font=("Arial", 13)).pack(padx=10, pady=10, anchor='w')
 
-            # User's answer
             tk.Label(self, text=f"Your Answer: {user_answer}", fg="red",
-                    font=("Arial", 12)).pack(pady=3)
+                     font=("Arial", 12)).pack(pady=3)
 
-            # Correct answer
             tk.Label(self, text=f"Correct Answer: {correct_answer}", fg="green",
-                    font=("Arial", 12)).pack(pady=3)
+                     font=("Arial", 12)).pack(pady=3)
 
-            # Navigation buttons
             nav_frame = tk.Frame(self)
             nav_frame.pack(pady=10)
 
@@ -247,26 +267,6 @@ class QuizInterface(tk.Toplevel):
     def review_previous_question(self):
         if self.current_review_index > 0:
             self.current_review_index -= 1
-            self.display_review_question()
-
-    def show_review_mode(self):
-        self.clear_widgets()
-        self.review_mode = True
-        self.current_question_index = 0
-
-        self.score_label = tk.Label(self, text=f"Your Score: {self.score}", font=("Arial", 10, "bold"))
-        self.score_label.pack(pady=5)
-
-        self.display_review_question()
-
-    def prev_review(self):
-        if self.review_index > 0:
-            self.review_index -= 1
-            self.display_review_question()
-
-    def next_review(self):
-        if self.review_index < len(self.incorrect_questions) - 1:
-            self.review_index += 1
             self.display_review_question()
 
     def restart_quiz(self):
