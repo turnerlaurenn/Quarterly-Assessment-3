@@ -105,9 +105,6 @@ class AdminPanel(tk.Toplevel):
         back_button = tk.Button(scrollable_frame, text="Back", command=self.show_admin_actions)
         back_button.pack(pady=10)
 
-        # Bind mousewheel scrolling
-        self.bind_mousewheel(canvas)
-
         self.scrollable_canvas = canvas
         self.scrollbar = scrollbar
 
