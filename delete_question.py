@@ -46,7 +46,7 @@ class DeleteQuestion(tk.Frame):
             cursor.execute(f"SELECT rowid, question_text FROM \"{category}\"")
             questions = cursor.fetchall()
             for rowid, text in questions:
-                self.question_list.insert(tk.END, f"ID: {rowid} - {text[:50]}...") # Show a preview of the question
+                self.question_list.insert(tk.END, f"ID: {rowid} - {text}")
             if questions:
                 self.delete_button.config(state=tk.NORMAL)
             else:
