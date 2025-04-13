@@ -27,7 +27,13 @@ class QuizInterface(tk.Toplevel):
         self.clear_widgets()
         tk.Label(self, text="Select Quiz Category", font=("Arial", 16)).pack(pady=20)
 
-        categories = ["Analytic Thinking (DS3810)", "Marketing", "Applications Development (DS3850)", "Business Analytics (DS3620)", "Database Management (DS3860)"]
+        categories = [
+            "Analytic Thinking (DS3810)",
+            "Marketing",
+            "Applications Development (DS3850)",
+            "Business Analytics (DS3620)",
+            "Database Management (DS3860)"
+        ]
         for category in categories:
             category_button = tk.Button(self, text=category, command=lambda cat=category: self.start_quiz(cat))
             category_button.pack(pady=5)
@@ -149,9 +155,11 @@ class QuizInterface(tk.Toplevel):
 
         self.feedback_displayed = True
 
-        restart_button = tk.Button(self, text="Restart Quiz", command=self.restart_quiz)
-        restart_button.pack(pady=5)
-        exit_button = tk.Button(self, text="Exit", command=self.on_quiz_closing) # Change here
+        # Add back to category and exit buttons
+        back_button = tk.Button(self, text="Back to Categories", command=self.restart_quiz)
+        back_button.pack(pady=5)
+
+        exit_button = tk.Button(self, text="Exit", command=self.on_quiz_closing)
         exit_button.pack(pady=5)
 
     def restart_quiz(self):
@@ -172,14 +180,14 @@ class QuizInterface(tk.Toplevel):
             if messagebox.askyesno("Exit Quiz", "Are you sure you want to exit the quiz?"):
                 self.destroy()
                 if self.master:
-                    self.master.destroy()
+                    self.master.quiz_active = False
         else:
             self.destroy()
             if self.master:
-                self.master.destroy()
+                self.master.quiz_active = False
 
 if __name__ == "__main__":
     root = tk.Tk()
     root.withdraw()
     quiz = QuizInterface(root)
-    root.mainloop()  # Keep mainloop here
+    root.mainloop()
