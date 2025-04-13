@@ -93,7 +93,7 @@ class AddQuestion(tk.Frame):
             conn = sqlite3.connect(DATABASE_NAME)
             cursor = conn.cursor()
             cursor.execute(f"""CREATE TABLE IF NOT EXISTS '{category}' (
-                                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                id INTEGER PRIMARY KEY,
                                 question_text TEXT NOT NULL,
                                 option1 TEXT NOT NULL,
                                 option2 TEXT NOT NULL,
