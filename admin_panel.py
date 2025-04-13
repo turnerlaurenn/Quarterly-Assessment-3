@@ -19,19 +19,22 @@ class AdminPanel(tk.Toplevel):
         self.master_frame.pack(fill="both", expand=True)
 
         self.current_view = None
+        self.login_frame = None  # To keep track of the login frame
+        self.actions_frame = None # To keep track of the actions frame
         self.show_login()
 
     def show_login(self):
         self.clear_view()
-        login_frame = tk.Frame(self.master_frame)
-        login_frame.pack(pady=50)
+        self.login_frame = tk.Frame(self.master_frame)
+        self.login_frame.pack(pady=50)
 
-        password_label = tk.Label(login_frame, text="Enter Admin Password:")
+        password_label = tk.Label(self.login_frame, text="Enter Admin Password:")
         password_label.pack(pady=5)
-        self.password_entry = tk.Entry(login_frame, show="*")
+        self.password_entry = tk.Entry(self.login_frame, show="*")
         self.password_entry.pack(pady=5)
-        login_button = tk.Button(login_frame, text="Login", command=self.authenticate)
+        login_button = tk.Button(self.login_frame, text="Login", command=self.authenticate)
         login_button.pack(pady=10)
+        self.current_view = self.login_frame # Update current_view
 
     def authenticate(self):
         password = self.password_entry.get()
@@ -43,17 +46,19 @@ class AdminPanel(tk.Toplevel):
 
     def show_admin_actions(self):
         self.clear_view()
-        actions_frame = tk.Frame(self.master_frame)
-        actions_frame.pack(pady=20)
+        self.actions_frame = tk.Frame(self.master_frame)
+        self.actions_frame.pack(pady=20)
 
-        view_button = tk.Button(actions_frame, text="View Questions", command=self.open_view_questions, padx=20, pady=10)
+        view_button = tk.Button(self.actions_frame, text="View Questions", command=self.open_view_questions, padx=20, pady=10)
         view_button.pack(pady=5)
-        add_button = tk.Button(actions_frame, text="Add Question", command=self.open_add_question, padx=20, pady=10)
+        add_button = tk.Button(self.actions_frame, text="Add Question", command=self.open_add_question, padx=20, pady=10)
+        add_button = tk.Button(self.actions_frame, text="Add Question", command=self.open_add_question, padx=20, pady=10)
         add_button.pack(pady=5)
-        delete_button = tk.Button(actions_frame, text="Delete Question", command=self.open_delete_question, padx=20, pady=10)
+        delete_button = tk.Button(self.actions_frame, text="Delete Question", command=self.open_delete_question, padx=20, pady=10)
         delete_button.pack(pady=5)
-        modify_button = tk.Button(actions_frame, text="Modify Question", command=self.open_modify_question, padx=20, pady=10)
+        modify_button = tk.Button(self.actions_frame, text="Modify Question", command=self.open_modify_question, padx=20, pady=10)
         modify_button.pack(pady=5)
+        self.current_view = self.actions_frame # Update current_view
 
     def open_view_questions(self):
         self.clear_view()
@@ -76,9 +81,11 @@ class AdminPanel(tk.Toplevel):
         self.current_view.pack(fill="both", expand=True)
 
     def clear_view(self):
-        if self.current_view:
-            self.current_view.destroy()
-            self.current_view = None
+        for widget in self.master_frame.winfo_children():
+            widget.destroy()
+        self.current_view = None
+        self.login_frame = None
+        self.actions_frame = None
 
 if __name__ == "__main__":
     # This block is for testing admin_panel.py directly
