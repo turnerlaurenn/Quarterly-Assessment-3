@@ -14,7 +14,7 @@ class ViewQuestions(tk.Frame):
         self.category_label = tk.Label(self, text="Select Category:")
         self.category_label.pack(anchor="w", padx=20)
         self.category_var = tk.StringVar(self)
-        self.category_choices = ["Analytic Thinking (DS3810)", "Marketing", "Applications Development (DS3850)", "Business Analytics (DS3620)", "Database Management (DS3860)"]
+        self.category_choices = ["", "Analytic Thinking (DS3810)", "Marketing", "Applications Development (DS3850)", "Business Analytics (DS3620)", "Database Management (DS3860)"]
         self.category_var.set(self.category_choices[0])
         self.category_dropdown = ttk.Combobox(self, textvariable=self.category_var, values=self.category_choices, state="readonly")
         self.category_dropdown.pack(anchor="w", padx=20, pady=5)
@@ -24,12 +24,17 @@ class ViewQuestions(tk.Frame):
         self.question_details_text.pack(padx=20, pady=10)
         self.question_details_text.config(state=tk.DISABLED) # Make it read-only
 
+        # Populate with the initial blank selection to avoid immediate population
         self.populate_question_details()
 
     def populate_question_details(self, event=None):
         self.question_details_text.config(state=tk.NORMAL)
         self.question_details_text.delete("1.0", tk.END)
         category = self.category_var.get()
+        if not category:
+            self.question_details_text.insert(tk.END, "Please select a category to view questions.\n")
+            self.question_details_text.config(state=tk.DISABLED)
+            return
         conn = None
         try:
             conn = sqlite3.connect(DATABASE_NAME)
