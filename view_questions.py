@@ -39,16 +39,17 @@ class ViewQuestions(tk.Frame):
         try:
             conn = sqlite3.connect(DATABASE_NAME)
             cursor = conn.cursor()
-            cursor.execute(f"SELECT question_text, option1, option2, option3, option4, correct_answer FROM \"{category}\"")
+            cursor.execute(f"SELECT id, question_text, option1, option2, option3, option4, correct_answer FROM \"{category}\"") # Select ID as well
             questions = cursor.fetchall()
             if questions:
-                for q in questions:
-                    self.question_details_text.insert(tk.END, f"Question: {q[0]}\n")
-                    self.question_details_text.insert(tk.END, f"  Option 1: {q[1]}\n")
-                    self.question_details_text.insert(tk.END, f"  Option 2: {q[2]}\n")
-                    self.question_details_text.insert(tk.END, f"  Option 3: {q[3]}\n")
-                    self.question_details_text.insert(tk.END, f"  Option 4: {q[4]}\n")
-                    self.question_details_text.insert(tk.END, f"  Correct Answer: {q[5]}\n\n")
+                for i, q in enumerate(questions):
+                    self.question_details_text.insert(tk.END, f"Question {i+1} (ID: {q[0]}):\n") #added ID
+                    self.question_details_text.insert(tk.END, f"  Question: {q[1]}\n")
+                    self.question_details_text.insert(tk.END, f"  Option 1: {q[2]}\n")
+                    self.question_details_text.insert(tk.END, f"  Option 2: {q[3]}\n")
+                    self.question_details_text.insert(tk.END, f"  Option 3: {q[4]}\n")
+                    self.question_details_text.insert(tk.END, f"  Option 4: {q[5]}\n")
+                    self.question_details_text.insert(tk.END, f"  Correct Answer: {q[6]}\n\n")
             else:
                 self.question_details_text.insert(tk.END, f"No questions found in the '{category}' category.\n")
         except sqlite3.Error as e:
