@@ -1,3 +1,6 @@
+import sys
+sys.dont_write_bytecode = True
+
 import tkinter as tk
 from admin_panel import AdminPanel
 from quiz_interface import QuizInterface
