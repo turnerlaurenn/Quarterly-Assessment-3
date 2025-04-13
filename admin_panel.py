@@ -81,7 +81,11 @@ class AdminPanel(tk.Toplevel):
     def load_scrollable_view(self, ViewClass):
         self.clear_view()
 
-        canvas = tk.Canvas(self.master_frame)
+        canvas = tk.Canvas(
+            self.master_frame,
+            highlightthickness=0,  # Removes blue border/highlight
+            bd=0
+        )
         scrollbar = tk.Scrollbar(self.master_frame, orient="vertical", command=canvas.yview)
         scrollable_frame = tk.Frame(canvas)
 
@@ -98,12 +102,25 @@ class AdminPanel(tk.Toplevel):
         canvas.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
 
-        # Add content
+        # Styled back button
+        back_button = tk.Button(
+            scrollable_frame,
+            text="← Back",
+            command=self.show_admin_actions,
+            bg="#f0f0f0",
+            fg="#333",
+            activebackground="#e0e0e0",
+            activeforeground="#000",
+            relief="groove",
+            bd=2,
+            font=("Arial", 10, "bold"),
+            padx=10,
+            pady=5
+        )
+        back_button.pack(pady=(10, 5), padx=10, anchor="w")
+
         self.current_view = ViewClass(scrollable_frame)
         self.current_view.pack(fill="both", expand=True)
-
-        back_button = tk.Button(scrollable_frame, text="Back", command=self.show_admin_actions)
-        back_button.pack(pady=10)
 
         self.scrollable_canvas = canvas
         self.scrollbar = scrollbar
