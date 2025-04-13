@@ -93,8 +93,26 @@ class QuizInterface(tk.Toplevel):
                 self.answer_var.set(saved_answer)
 
             for i, option in enumerate(options):
-                rb = ttk.Radiobutton(self, text=option, variable=self.answer_var, value=option)
-                rb.pack(padx=20, pady=2, anchor='w')
+                option_frame = tk.Frame(self)
+                option_frame.pack(fill="x", padx=20, pady=5, anchor="w")
+
+                rb = ttk.Radiobutton(option_frame, variable=self.answer_var, value=option)
+                rb.pack(side="left")
+
+                lbl = tk.Label(
+                    option_frame,
+                    text=option,
+                    wraplength=300,
+                    justify="left",
+                    anchor="w",
+                    font=("Arial", 12)
+                )
+                lbl.pack(side="left", padx=10, fill="x")
+
+                lbl.bind("<Button-1>", lambda e, opt=option: self.answer_var.set(opt))
+
+
+
 
             self.create_navigation_buttons()
         else:
