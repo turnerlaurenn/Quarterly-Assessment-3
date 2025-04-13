@@ -47,15 +47,8 @@ class QuizApp(tk.Tk):
         if not self.quiz_window or not tk.Toplevel.winfo_exists(self.quiz_window):
             self.quiz_window = QuizInterface(self)
             self.quiz_active = True  # Set the flag when the quiz starts
-            self.quiz_window.protocol("WM_DELETE_WINDOW", self.on_quiz_close) # Handle quiz window closing
         else:
             self.quiz_window.lift()
-
-    def on_quiz_close(self):
-        self.quiz_active = False  # Reset the flag when the quiz window is closed
-        if self.quiz_window:
-            self.quiz_window.destroy()
-            self.quiz_window = None
 
 if __name__ == "__main__":
     app = QuizApp()
