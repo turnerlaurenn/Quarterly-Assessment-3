@@ -31,7 +31,7 @@ class ModifyQuestion(tk.Frame):
 
         self.question_text_label = tk.Label(self, text="Question Text:")
         self.question_text_label.pack(anchor="w", padx=20, pady=10)
-        self.question_text_entry = tk.Text(self, height=3, width=50, wrap=tk.WORD) # Added wrap=tk.WORD
+        self.question_text_entry = tk.Text(self, height=3, width=50, wrap=tk.WORD)
         self.question_text_entry.pack(anchor="w", padx=20, pady=5)
         self.question_text_entry.bind("<KeyRelease>", self.enable_save_button)
         self.original_question_text = ""
@@ -56,7 +56,7 @@ class ModifyQuestion(tk.Frame):
         self.correct_answer_entry.bind("<KeyRelease>", self.enable_save_button)
         self.original_correct_answer = ""
 
-        self.save_button = tk.Button(self, text="Save Changes", command=self.save_changes, state=tk.DISABLED) # Initially disabled
+        self.save_button = tk.Button(self, text="Save Changes", command=self.save_changes, state=tk.DISABLED)
         self.save_button.pack(pady=20)
 
         self.selected_question_id = None
@@ -73,7 +73,7 @@ class ModifyQuestion(tk.Frame):
             cursor.execute(f"SELECT rowid, question_text FROM \"{category}\"")
             questions = cursor.fetchall()
             for rowid, text in questions:
-                self.question_list.insert(tk.END, f"ID: {rowid} - {text[:50]}...")
+                self.question_list.insert(tk.END, f"ID: {rowid} - {text}")  # Show full text in listbox
         except sqlite3.Error as e:
             messagebox.showerror("Database Error", f"Error fetching questions: {e}")
         finally:
@@ -115,7 +115,7 @@ class ModifyQuestion(tk.Frame):
                         self.correct_answer_entry.delete(0, tk.END)
                         self.correct_answer_entry.insert(0, str(correct_index))
                         self.original_correct_answer = str(correct_index)
-                        self.enable_save_button() # Check button state after loading
+                        self.enable_save_button()
                     except ValueError:
                         messagebox.showerror("Error", "Correct answer not found in options.")
                         self.save_button.config(state=tk.DISABLED)
@@ -172,7 +172,7 @@ class ModifyQuestion(tk.Frame):
             cursor.execute(sql, (question_text, options[0], options[1], options[2], options[3], correct_answer, self.selected_question_id))
             conn.commit()
             messagebox.showinfo("Success", f"Question ID {self.selected_question_id} updated successfully in {category}!")
-            self.populate_question_list() # Refresh the list
+            self.populate_question_list()
             self.clear_details()
             self.save_button.config(state=tk.DISABLED)
             self.selected_question_id = None
