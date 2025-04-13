@@ -5,9 +5,9 @@ import random
 
 DATABASE_NAME = 'questions.db'
 
-class QuizInterface(tk.Tk):
-    def __init__(self):
-        super().__init__()
+class QuizInterface(tk.Toplevel):  # Inherit from tk.Toplevel
+    def __init__(self, master=None):  # Add master argument with a default value
+        super().__init__(master)
         self.title("Quiz")
         self.geometry("400x300")
         self.selected_category = None
