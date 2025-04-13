@@ -20,7 +20,7 @@ class ViewQuestions(tk.Frame):
         self.category_dropdown.pack(anchor="w", padx=20, pady=5)
         self.category_dropdown.bind("<<ComboboxSelected>>", self.populate_question_details)
 
-        self.question_details_text = tk.Text(self, height=15, width=70)
+        self.question_details_text = tk.Text(self, height=15, width=70, wrap="word")
         self.question_details_text.pack(padx=20, pady=10)
         self.question_details_text.config(state=tk.DISABLED) # Make it read-only
 
