@@ -31,7 +31,7 @@ class QuizApp(tk.Tk):
 
     def open_quiz_interface(self):
         if not self.quiz_window or not tk.Toplevel.winfo_exists(self.quiz_window):
-            self.quiz_window = QuizInterface()  # Instantiate QuizInterface directly as a Toplevel
+            self.quiz_window = QuizInterface(self)  # Pass 'self' (QuizApp window) as master
         else:
             self.quiz_window.lift()
 
