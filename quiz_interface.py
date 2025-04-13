@@ -169,24 +169,105 @@ class QuizInterface(tk.Toplevel):
         self.clear_widgets()
 
         correct_count = 0
+        self.incorrect_questions = []
+
         for i, question_data in enumerate(self.questions):
             correct_answer = question_data[5]
             user_answer = self.user_answers.get(i, "Not Answered")
             if user_answer == correct_answer:
-                correct_count += 1
+                 correct_count += 1
+            else:
+                self.incorrect_questions.append((i, question_data, user_answer))
 
+        self.score_summary = f"You scored {correct_count}/{len(self.questions)} ({(correct_count / len(self.questions)) * 100:.2f}%)"
+                
         tk.Label(self, text="Quiz Results", font=("Arial", 16, "bold")).pack(pady=10)
-        percentage = (correct_count / len(self.questions)) * 100 if self.questions else 0
-        tk.Label(self, text=f"You scored {correct_count}/{len(self.questions)} ({percentage:.2f}%)", font=("Arial", 14, "bold")).pack(pady=10)
+        tk.Label(self, text=self.score_summary, font=("Arial", 14, "bold")).pack(pady=10)
 
         self.feedback_displayed = True
 
-        # Add back to category and exit buttons
+        if self.incorrect_questions:
+            review_button = tk.Button(self, text="Review Incorrect Answers", command=self.start_review)
+            review_button.pack(pady=5)
+
         back_button = tk.Button(self, text="Back to Categories", command=self.restart_quiz)
         back_button.pack(pady=5)
 
         exit_button = tk.Button(self, text="Exit", command=self.on_quiz_closing)
         exit_button.pack(pady=5)
+
+    def start_review(self):
+        self.current_review_index = 0  # Initialize the review index
+        self.display_review_question()
+
+    def display_review_question(self):
+        self.clear_widgets()
+
+        if self.current_review_index < len(self.incorrect_questions):
+            i, question_data, user_answer = self.incorrect_questions[self.current_review_index]
+            question_text = question_data[0]
+            correct_answer = question_data[5]
+
+            # Score label
+            tk.Label(self, text=f"{self.score_summary}", font=("Arial", 12, "bold")).pack(pady=5)
+
+            # Question label
+            tk.Label(self, text=f"Reviewing Question {self.current_review_index + 1}/{len(self.incorrect_questions)}",
+                    font=("Arial", 11)).pack(pady=5)
+            tk.Label(self, text=question_text, wraplength=350, justify='left',
+                    font=("Arial", 13)).pack(padx=10, pady=10, anchor='w')
+
+            # User's answer
+            tk.Label(self, text=f"Your Answer: {user_answer}", fg="red",
+                    font=("Arial", 12)).pack(pady=3)
+
+            # Correct answer
+            tk.Label(self, text=f"Correct Answer: {correct_answer}", fg="green",
+                    font=("Arial", 12)).pack(pady=3)
+
+            # Navigation buttons
+            nav_frame = tk.Frame(self)
+            nav_frame.pack(pady=10)
+
+            if self.current_review_index > 0:
+                back_btn = tk.Button(nav_frame, text="Back", command=self.review_previous_question)
+                back_btn.pack(side="left", padx=10)
+
+            if self.current_review_index < len(self.incorrect_questions) - 1:
+                next_btn = tk.Button(nav_frame, text="Next", command=self.review_next_question)
+                next_btn.pack(side="right", padx=10)
+            else:
+                done_btn = tk.Button(nav_frame, text="Done Reviewing", command=self.restart_quiz)
+                done_btn.pack(side="right", padx=10)
+
+    def review_next_question(self):
+        self.current_review_index += 1
+        self.display_review_question()
+
+    def review_previous_question(self):
+        if self.current_review_index > 0:
+            self.current_review_index -= 1
+            self.display_review_question()
+
+    def show_review_mode(self):
+        self.clear_widgets()
+        self.review_mode = True
+        self.current_question_index = 0
+
+        self.score_label = tk.Label(self, text=f"Your Score: {self.score}", font=("Arial", 10, "bold"))
+        self.score_label.pack(pady=5)
+
+        self.display_review_question()
+
+    def prev_review(self):
+        if self.review_index > 0:
+            self.review_index -= 1
+            self.display_review_question()
+
+    def next_review(self):
+        if self.review_index < len(self.incorrect_questions) - 1:
+            self.review_index += 1
+            self.display_review_question()
 
     def restart_quiz(self):
         self.quiz_started = False
