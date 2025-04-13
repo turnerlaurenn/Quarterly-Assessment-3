@@ -31,7 +31,7 @@ class ModifyQuestion(tk.Frame):
 
         self.question_text_label = tk.Label(self, text="Question Text:")
         self.question_text_label.pack(anchor="w", padx=20, pady=10)
-        self.question_text_entry = tk.Text(self, height=3, width=50)
+        self.question_text_entry = tk.Text(self, height=3, width=50, wrap=tk.WORD) # Added wrap=tk.WORD
         self.question_text_entry.pack(anchor="w", padx=20, pady=5)
         self.question_text_entry.bind("<KeyRelease>", self.enable_save_button)
         self.original_question_text = ""
