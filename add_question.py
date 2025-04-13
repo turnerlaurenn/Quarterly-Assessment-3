@@ -21,7 +21,7 @@ class AddQuestion(tk.Frame):
 
         self.question_text_label = tk.Label(self, text="Question Text:")
         self.question_text_label.pack(anchor="w", padx=20, pady=10)
-        self.question_text_entry = tk.Text(self, height=3, width=50)
+        self.question_text_entry = tk.Text(self, height=3, width=50, wrap=tk.WORD) # Use tk.Text with word wrapping
         self.question_text_entry.pack(anchor="w", padx=20, pady=5)
         self.question_text_entry.bind("<KeyRelease>", self.check_enable_add_button)
         self.question_text_entry.bind("<FocusOut>", self.check_enable_add_button)
